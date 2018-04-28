@@ -1,7 +1,7 @@
-import dva from 'dva';
-import { connect } from 'dva';
+import dva, { connect } from 'dva';
 import { Router, Route, Switch } from 'dva/router';
 import styles from './index.less';
+import key from 'keymaster';
 
 // 1. Initialize
 const app = dva();
@@ -26,7 +26,25 @@ app.model({
       return { ...state, current: state.current - 1};
     },
   },
+  effects: {
+    *addThenMinus(action, { call, put }) {
+      yield put({ type: 'add' });
+      yield call( delay, 1000);
+      yield put({ type: 'minus' });
+    },
+  },
+  subscriptions: {
+    keyboardWatcher({ dispatch }) {
+      key('⌘+up, ctrl+up', () => { dispatch({type:'addThenMinus'}) });
+    },
+  },
 });
+
+function delay(timeout){
+    return new Promise(resolve => {
+        setTimeout(resolve, timeout);
+      });
+  }
 
 const CountApp = ({count, dispatch}) => {
   return (
@@ -34,7 +52,7 @@ const CountApp = ({count, dispatch}) => {
       <div className={styles.record}>Highest Record: {count.record}</div>
       <div className={styles.current}>{count.current}</div>
       <div className={styles.button}>
-        <button onClick={() => { dispatch({type: 'count/add'}); }}>+</button>
+        <button onClick={() => { dispatch({type: 'count/addThenMinus'}); }}>+</button>
       </div>
     </div>
   );
